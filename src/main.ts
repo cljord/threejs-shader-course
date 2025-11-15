@@ -1,6 +1,6 @@
 import "./style.css";
 import * as THREE from "three/webgpu";
-import { color, convertColorSpace, positionLocal, texture } from "three/tsl";
+import { abs, color, convertColorSpace, Fn, If, positionLocal, rotateUV, texture, time, vec2 } from "three/tsl";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const scene = new THREE.Scene();
@@ -27,26 +27,26 @@ window.addEventListener("resize", function () {
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
+const main = Fn(() => {
+  const p = positionLocal.toVar();
+
+  p.assign(rotateUV(p.xy, time, vec2()))
+
+  If(abs(p.x).greaterThan(.45), () => {
+    // @ts-ignore
+    p.z = 1
+  })
+  If(abs(p.y).greaterThan(.45), () => {
+    // @ts-ignore
+    p.z = 1
+  })
+
+  return p;
+})
 const material = new THREE.NodeMaterial();
-// simply set material color to crimson
-// material.fragmentNode = color("crimson");
+material.fragmentNode = main();
 
-// load  texture
-// material.fragmentNode = texture(
-//   new THREE.TextureLoader().load("https://sbcode.net/img/grid.png")
-// );
-
-// previous texture is dulled out, convert color space for more vivid culler
-// material.fragmentNode = convertColorSpace(
-//   texture(new THREE.TextureLoader().load("https://sbcode.net/img/grid.png")),
-//   THREE.SRGBColorSpace,
-//   THREE.LinearSRGBColorSpace
-// );
-
-// goes into more detail in next lesson presumably
-material.fragmentNode = positionLocal;
-
-const mesh = new THREE.Mesh(new THREE.PlaneGeometry(), material);
+const mesh = new THREE.Mesh(new THREE.BoxGeometry(), material);
 scene.add(mesh);
 
 renderer.debug.getShaderAsync(scene, camera, mesh).then((e) => {
